@@ -1,0 +1,49 @@
+{
+  "name": "hyperf-plus/swagger",
+  "description": "A swagger library for Hyperf.",
+  "license": "MIT",
+  "keywords": [
+    "php",
+    "swoole",
+    "hyperf",
+    "swagger"
+  ],
+  "support": {
+  },
+  "require": {
+    "php": ">=7.2",
+    "hyperf-plus/route": "^1.0.0"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^2.9"
+  },
+  "suggest": {
+  },
+  "autoload": {
+    "psr-4": {
+      "HPlus\\Swagger\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "hyperf": {
+      "config": "HPlus\\Swagger\\ConfigProvider"
+    },
+    "branch-alias":{
+      "dev-master":"1.0.x-dev"
+    }
+  },
+  "bin": [
+  ],
+  "scripts": {
+    "cs-fix": "php-cs-fixer fix $1",
+    "test": "phpunit --colors=always"
+  },
+  "minimum-stability": "stable"
+}
