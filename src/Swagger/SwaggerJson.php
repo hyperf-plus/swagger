@@ -6,6 +6,7 @@ namespace HPlus\Swagger\Swagger;
 use Doctrine\Common\Annotations\AnnotationReader;
 use HPlus\Route\Annotation\ApiController;
 use HPlus\Route\Annotation\AdminController;
+use HPlus\Route\Annotation\Query;
 use HPlus\Swagger\Annotation\ApiDefinition;
 use HPlus\Swagger\Annotation\ApiDefinitions;
 use HPlus\Route\Annotation\ApiResponse;
@@ -16,11 +17,12 @@ use HPlus\Route\Annotation\FormData;
 use HPlus\Route\Annotation\Param;
 use HPlus\Swagger\ApiAnnotation;
 use Hyperf\Contract\ConfigInterface;
+use Hyperf\Di\ReflectionManager;
 use Hyperf\HttpServer\Annotation\Mapping;
-use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
 use Hyperf\Utils\Str;
+use HPlus\Validate\Annotations\RequestValidation;
 
 class SwaggerJson
 {
@@ -28,15 +30,12 @@ class SwaggerJson
 
     public $swagger;
 
-    public $logger;
-
     public $server;
 
     public function __construct($server)
     {
         $container = ApplicationContext::getContainer();
         $this->config = $container->get(ConfigInterface::class);
-        $this->logger = $container->get(LoggerFactory::class)->get('swagger');
         $this->swagger = $this->config->get('swagger.swagger');
         $this->server = $server;
     }
@@ -54,7 +53,6 @@ class SwaggerJson
         $definitionsAnno = $classAnnotation[ApiDefinitions::class] ?? null;
         $definitionAnno = $classAnnotation[ApiDefinition::class] ?? null;
         $bindServer = $serverAnno ? $serverAnno->name : $this->config->get('server.servers.0.name');
-
         $servers = $this->config->get('server.servers');
         $servers_name = array_column($servers, 'name');
         if (!in_array($bindServer, $servers_name)) {
@@ -73,7 +71,34 @@ class SwaggerJson
         /** @var \HPlus\Route\Annotation\GetApi $mapping */
         $mapping = null;
         $consumes = null;
+        $rules = [];
+        $consumes = 'application/x-www-form-urlencoded';
         foreach ($methodAnnotations as $option) {
+            if ($option instanceof RequestValidation) {
+                $rules = array_merge($rules, $this->getValidateRule($option));
+                if ($option->dateType == 'json') {
+                    $param = new Body();
+                    $param->rules = $this->getValidateRule($option);
+                    $param->name = "body";
+                    $param->key = "body";
+                    $params[] = $param;
+                    unset($param);
+                }
+                if ($option->dateType == 'form') {
+                    foreach ($this->getValidateRule($option) as $key => $item) {
+                        $param = new FormData();
+                        list($key, $name) = explode('|', $key);
+                        $param->key = $key;
+                        $param->name = $name;
+                        $param->rule = $item;
+                        $param->required = in_array('required', explode('|', $item));
+                        $params[] = $param;
+                        unset($param);
+                    }
+                }
+                $consumes = $this->getConsumes($option->dateType);
+                continue;
+            }
             if ($option instanceof Mapping) {
                 $mapping = $option;
             }
@@ -106,6 +131,7 @@ class SwaggerJson
             $path = '/' . $versionAnno->version . $path;
         }
         $path = str_replace("/_self_path", "", $path);
+        $path = $this->getPath($path);
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
             'tags' => [$tag],
@@ -114,13 +140,45 @@ class SwaggerJson
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
             'parameters' => $this->makeParameters($params, $path, $method),
             'produces' => [
-                "application/json",
+                $consumes
             ],
             'responses' => $this->makeResponses($responses, $path, $method),
         ];
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
+    }
+
+    private function getConsumes($type = 'json')
+    {
+        switch ($type) {
+            case 'json':
+                return 'application/json';
+            case 'xml':
+                return 'application/xml';
+            default:
+                return 'application/x-www-form-urlencoded';
+        }
+    }
+
+    private function getValidateRule(RequestValidation $validation)
+    {
+        if (class_exists($validation->validate)) {
+            $rolesModel = ReflectionManager::reflectClass($validation->validate)->getDefaultProperties();
+            $rules = $rolesModel['scene'][$validation->scene] ?? [];
+            $fields = $rolesModel['field'] ?? [];
+            $newRules = [];
+            foreach ($rules as $key => $rule) {
+                if (is_numeric($key)) {
+                    $key = $rule;
+                    $rule = $rolesModel['rule'][$rule] ?? '';
+                }
+                if (isset($fields[$key])) $key = $key . "|" . $fields[$key];
+                $newRules[$key] = $rule;
+            }
+            return $newRules;
+        }
+        return $validation->rules;
     }
 
     private function initModel()
@@ -210,40 +268,49 @@ class SwaggerJson
         return 'string';
     }
 
+    private function getPath($path)
+    {
+        $urls = explode(':', $path);
+        $path = $urls[0];
+        if (count($urls) > 1) {
+            $path .= '}';
+        }
+        return $path;
+    }
+
     public function makeParameters($params, $path, $method)
     {
         $this->initModel();
         $method = ucfirst($method);
-        $path = str_replace(['{', '}'], '', $path);
+        $path = $this->getPath($path);
         $parameters = [];
-        /** @var \HPlus\Swagger\Annotation\Query $item */
+        /** @var Query $item */
         foreach ($params as $item) {
             if ($item->rule !== null && in_array('array', explode('|', $item->rule))) {
                 $item->name .= '[]';
             }
-            $parameters[$item->name] = [
+            $parameters[$item->key] = [
                 'in' => $item->in,
-                'name' => $item->name,
-                'description' => $item->description,
+                'name' => $item->key,
+                'description' => empty($item->description) ? $item->name : $item->description,
                 'required' => $item->required,
             ];
             if ($item instanceof Body) {
                 $modelName = $method . implode('', array_map('ucfirst', explode('/', $path)));
                 $this->rules2schema($modelName, $item->rules);
-                $parameters[$item->name]['schema']['$ref'] = '#/definitions/' . $modelName;
+                $parameters[$item->key]['schema']['$ref'] = '#/definitions/' . $modelName;
             } else {
                 $type = $this->getTypeByRule($item->rule);
-                $parameters[$item->name]['type'] = $type;
-                $parameters[$item->name]['default'] = $item->default;
+                $parameters[$item->key]['type'] = $type;
+                $parameters[$item->key]['default'] = $item->default;
             }
         }
-
         return array_values($parameters);
     }
 
     public function makeResponses($responses, $path, $method)
     {
-        $path = str_replace(['{', '}'], '', $path);
+        $path = $this->getPath($path);
         $resp = [];
         /** @var ApiResponse $item */
         foreach ($responses as $item) {
@@ -349,7 +416,6 @@ class SwaggerJson
         foreach ($schemaContent as $keyString => $val) {
             $property = [];
             $property['type'] = gettype($val);
-
             $keyArray = explode('|', $keyString);
             $key = $keyArray[0];
             $_key = str_replace('_', '', $key);
@@ -393,12 +459,11 @@ class SwaggerJson
         $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
         $outputFile = $this->config->get('swagger.output_file');
         if (!$outputFile) {
-            $this->logger->error('/config/autoload/swagger.php need set output_file');
-            return;
+            throw new \Exception('/config/autoload/swagger.php need set output_file');
         }
         $outputFile = str_replace('{server}', $this->server, $outputFile);
         file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        $this->logger->debug('Generate swagger.json success!');
+        print_r('Generate swagger.json success!' . PHP_EOL);
     }
 
     protected function getPrefix(string $className, string $prefix): string
