@@ -147,6 +147,11 @@ class SwaggerJson
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
+        if ($mapping->security && isset($this->swagger['securityDefinitions'])) {
+            foreach ($this->swagger['securityDefinitions'] as $key => $val) {
+                $this->swagger['paths'][$path][$method]['security'][] = [$key => $val['petstore_auth'] ?? []];
+            }
+        }
     }
 
     private function getConsumes($type = 'json')

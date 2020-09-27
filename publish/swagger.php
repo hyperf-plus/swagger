@@ -26,5 +26,12 @@ return [
         ],
         'host' => '', //默认空为当前目录
         'schemes' => ['http'],
+        "securityDefinitions" => [
+            "token" => [
+                "type" => "apiKey",
+                "name" => "token",
+                "in" => "header"
+            ]
+        ],
     ],
 ];
