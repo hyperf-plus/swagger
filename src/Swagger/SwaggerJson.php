@@ -147,7 +147,7 @@ class SwaggerJson
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
-        if ($mapping->security && isset($this->swagger['securityDefinitions'])) {
+        if (property_exists($mapping, 'security') && $mapping->security && isset($this->swagger['securityDefinitions'])) {
             foreach ($this->swagger['securityDefinitions'] as $key => $val) {
                 $this->swagger['paths'][$path][$method]['security'][] = [$key => $val['petstore_auth'] ?? []];
             }
