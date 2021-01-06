@@ -11,12 +11,10 @@
   "support": {
   },
   "require": {
-    "php": ">=7.2",
-    "hyperf/di": "^2.0.0",
-    "hyperf-plus/route": "^1.0.0"
+    "php": ">=7.3",
+    "hyperf-plus/route": "^2.1.0"
   },
   "require-dev": {
-    "friendsofphp/php-cs-fixer": "^2.9"
   },
   "suggest": {
   },
@@ -35,9 +33,6 @@
   "extra": {
     "hyperf": {
       "config": "HPlus\\Swagger\\ConfigProvider"
-    },
-    "branch-alias":{
-      "dev-master":"1.0.x-dev"
     }
   },
   "bin": [
