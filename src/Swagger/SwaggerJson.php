@@ -254,6 +254,9 @@ class SwaggerJson
 
     public function getTypeByRule($rule)
     {
+       if (empty($rule)) {
+            return 'string';
+        }
         $default = explode('|', preg_replace('/\[.*\]/', '', $rule));
         if (array_intersect($default, ['int', 'lt', 'gt', 'ge'])) {
             return 'integer';
