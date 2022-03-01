@@ -44,7 +44,11 @@ class BootAppConfListener implements ListenerInterface
         }
         foreach ($servers as $server) {
             $swagger = new SwaggerJson($server['name']);
-
+            #跳过非http的服务
+            if ($server['name'] != 'http'){
+                continue;
+            }
+            
             $ignore = $config->get('swagger.ignore', function ($controller, $action) {
                 return false;
             });
