@@ -11,8 +11,8 @@
   "support": {
   },
   "require": {
-    "php": ">=7.3",
-    "hyperf-plus/route": "^2.1.0"
+    "php": ">=8.0",
+    "hyperf-plus/route": "^3.0.0"
   },
   "require-dev": {
   },

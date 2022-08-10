@@ -86,7 +86,7 @@ class SwaggerJson
                 }
                 if ($option->dateType == 'form') {
                     foreach ($this->getValidateRule($option) as $key => $item) {
-                        $param = new FormData();
+                        $param = new FormData("");
                         list($key, $name) = explode('|', $key);
                         $param->key = $key;
                         $param->name = $name;

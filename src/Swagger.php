@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace HPlus\Swagger;
 
 use GuzzleHttp\Psr7\Stream;
@@ -10,24 +9,23 @@ use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\HttpServer\Contract\ResponseInterface;
 use Hyperf\Utils\ApplicationContext;
 use Psr\Http\Message\StreamInterface;
-
-
 /**
  * @\Hyperf\HttpServer\Annotation\AutoController(prefix="/swagger")
  * Class SwaggerController
  */
+#[\Hyperf\HttpServer\Annotation\AutoController(prefix: '/swagger')]
 class Swagger
 {
     /**
      * @var ConfigInterface $config
      */
     protected $config;
-
+    
     public function __construct()
     {
         $this->config = ApplicationContext::getContainer()->get(ConfigInterface::class);
     }
-
+    
     public function index()
     {
         if (!$this->config->get('swagger.enable', false)) {
@@ -98,7 +96,7 @@ class Swagger
 ';
         return $res->withBody(new SwooleStream($html))->withHeader('content-type', 'text/html; charset=utf8');
     }
-
+    
     public function api()
     {
         if (!$this->config->get('swagger.enable', false)) {
