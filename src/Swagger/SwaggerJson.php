@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace HPlus\Swagger\Swagger;
 
-use Doctrine\Common\Annotations\AnnotationReader;
+use Exception;
 use HPlus\Route\Annotation\ApiController;
 use HPlus\Route\Annotation\AdminController;
+use HPlus\Route\Annotation\GetApi;
+use HPlus\Route\Annotation\Mapping;
 use HPlus\Route\Annotation\Query;
 use HPlus\Swagger\Annotation\ApiDefinition;
 use HPlus\Swagger\Annotation\ApiDefinitions;
@@ -18,7 +20,6 @@ use HPlus\Route\Annotation\Param;
 use HPlus\Swagger\ApiAnnotation;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\ReflectionManager;
-use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
 use Hyperf\Utils\Str;
@@ -42,10 +43,7 @@ class SwaggerJson
 
     public function addPath($className, $methodName, $path)
     {
-        $ignores = $this->config->get('annotations.scan.ignore_annotations', []);
-        foreach ($ignores as $ignore) {
-            AnnotationReader::addGlobalIgnoredName($ignore);
-        }
+
         $classAnnotation = ApiAnnotation::classMetadata($className);
         $controlerAnno = $classAnnotation[ApiController::class] ?? $classAnnotation[AdminController::class] ?? null;
         $serverAnno = $classAnnotation[ApiServer::class] ?? null;
@@ -56,19 +54,20 @@ class SwaggerJson
         $servers = $this->config->get('server.servers');
         $servers_name = array_column($servers, 'name');
         if (!in_array($bindServer, $servers_name)) {
-            throw new \Exception(sprintf('The bind ApiServer name [%s] not found, defined in %s!', $bindServer, $className));
+            throw new Exception(sprintf('The bind ApiServer name [%s] not found, defined in %s!', $bindServer, $className));
         }
 
         if ($bindServer !== $this->server) {
             return;
         }
+
         $methodAnnotations = ApiAnnotation::methodMetadata($className, $methodName);
         if (!$controlerAnno || !$methodAnnotations) {
             return;
         }
         $params = [];
         $responses = [];
-        /** @var \HPlus\Route\Annotation\GetApi $mapping */
+        /** @var GetApi $mapping */
         $mapping = null;
         $consumes = null;
         $rules = [];
@@ -77,7 +76,7 @@ class SwaggerJson
             if ($option instanceof RequestValidation) {
                 $rules = array_merge($rules, $this->getValidateRule($option));
                 if ($option->dateType == 'json') {
-                    $param = new Body();
+                    $param = new Body("");
                     $param->rules = $this->getValidateRule($option);
                     $param->name = "body";
                     $param->key = "body";
@@ -99,6 +98,7 @@ class SwaggerJson
                 $consumes = $this->getConsumes($option->dateType);
                 continue;
             }
+
             if ($option instanceof Mapping) {
                 $mapping = $option;
             }
@@ -132,12 +132,13 @@ class SwaggerJson
         }
         $path = str_replace("/_self_path", "", $path);
         $path = $this->getPath($path);
-        $method = strtolower($mapping->methods[0]);
+
+        $method = strtolower($mapping->methods[0] ?? '');
         $this->swagger['paths'][$path][$method] = [
             'tags' => [$tag],
             'summary' => $mapping->summary ?? '',
             'description' => $mapping->description ?? '',
-            'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
+            'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . ($mapping->methods[0] ?? ''),
             'parameters' => $this->makeParameters($params, $path, $method),
             'produces' => [
                 $consumes
@@ -147,7 +148,7 @@ class SwaggerJson
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
-        if (property_exists($mapping, 'security') && $mapping->security && isset($this->swagger['securityDefinitions'])) {
+        if ($mapping && property_exists($mapping, 'security') && $mapping->security && isset($this->swagger['securityDefinitions'])) {
             foreach ($this->swagger['securityDefinitions'] as $key => $val) {
                 $this->swagger['paths'][$path][$method]['security'][] = [$key => $val['petstore_auth'] ?? []];
             }
@@ -168,7 +169,7 @@ class SwaggerJson
 
     private function getValidateRule(RequestValidation $validation)
     {
-        if (class_exists($validation->validate)) {
+        if ($validation->validate && class_exists($validation->validate)) {
             $rolesModel = ReflectionManager::reflectClass($validation->validate)->getDefaultProperties();
             $rules = $rolesModel['scene'][$validation->scene] ?? [];
             $fields = $rolesModel['field'] ?? [];
@@ -254,7 +255,7 @@ class SwaggerJson
 
     public function getTypeByRule($rule)
     {
-       if (empty($rule)) {
+        if (empty($rule)) {
             return 'string';
         }
         $default = explode('|', preg_replace('/\[.*\]/', '', $rule));
@@ -294,7 +295,7 @@ class SwaggerJson
         $parameters = [];
         /** @var Query $item */
         foreach ($params as $item) {
-            if ($item->rule !== null && in_array('array', explode('|', $item->rule))) {
+            if ($item->rule && $item->rule !== null && in_array('array', explode('|', $item->rule))) {
                 $item->name .= '[]';
             }
             $parameters[$item->key] = [
@@ -467,7 +468,7 @@ class SwaggerJson
         $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
         $outputFile = $this->config->get('swagger.output_file');
         if (!$outputFile) {
-            throw new \Exception('/config/autoload/swagger.php need set output_file');
+            throw new Exception('/config/autoload/swagger.php need set output_file');
         }
         $outputFile = str_replace('{server}', $this->server, $outputFile);
         file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace HPlus\Swagger\Annotation;
 
+use Attribute;
 use Hyperf\Di\Annotation\AbstractAnnotation;
 /**
  * @Annotation

@@ -2,8 +2,8 @@
 declare(strict_types=1);
 namespace HPlus\Swagger;
 
-use Doctrine\Common\Annotations\AnnotationReader;
 use Hyperf\Di\Annotation\AnnotationCollector;
+use Hyperf\Di\Annotation\AnnotationReader;
 use Hyperf\Di\ReflectionManager;
 
 class ApiAnnotation
@@ -11,8 +11,7 @@ class ApiAnnotation
     public static function methodMetadata($className, $methodName)
     {
         $reflectMethod = ReflectionManager::reflectMethod($className, $methodName);
-        $reader = new AnnotationReader();
-
+        $reader = new AnnotationReader(config('annotations.scan.ignore_annotations', []));
         return $reader->getMethodAnnotations($reflectMethod);
     }
 

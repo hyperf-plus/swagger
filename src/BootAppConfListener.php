@@ -22,7 +22,7 @@ class BootAppConfListener implements ListenerInterface
         ];
     }
 
-    public function process(object $event)
+    public function process(object $event):void
     {
         $container = ApplicationContext::getContainer();
         $logger = $container->get(LoggerFactory::class)->get('swagger');
@@ -52,10 +52,13 @@ class BootAppConfListener implements ListenerInterface
             $ignore = $config->get('swagger.ignore', function ($controller, $action) {
                 return false;
             });
-
             array_walk_recursive($data, function ($item) use ($swagger, $ignore) {
                 if ($item instanceof Handler && !($item->callback instanceof \Closure)) {
                     [$controller, $action] = $this->prepareHandler($item->callback);
+
+
+
+
                     (!$ignore($controller, $action)) && $swagger->addPath($controller, $action, $item->route);
                 }
             });
