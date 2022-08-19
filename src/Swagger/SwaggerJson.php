@@ -86,7 +86,7 @@ class SwaggerJson
                 if ($option->dateType == 'form') {
                     foreach ($this->getValidateRule($option) as $key => $item) {
                         $param = new FormData("");
-                        list($key, $name) = explode('|', $key);
+                        [$key, $name] = explode('|', $key);
                         $param->key = $key;
                         $param->name = $name;
                         $param->rule = $item;
@@ -249,7 +249,6 @@ class SwaggerJson
 
             $schema['properties'][$fieldName] = $property;
         }
-
         $this->swagger['definitions'][$name] = $schema;
     }
 
@@ -287,6 +286,16 @@ class SwaggerJson
         return $path;
     }
 
+    private function getDefaultParameter($key, $in, $name, $required = false, $description = null)
+    {
+        return [
+            'in' => $in,
+            'name' => $key,
+            'description' => empty($description) ? $name : $description,
+            'required' => $required,
+        ];
+    }
+
     public function makeParameters($params, $path, $method)
     {
         $this->initModel();
@@ -298,20 +307,39 @@ class SwaggerJson
             if ($item->rule && $item->rule !== null && in_array('array', explode('|', $item->rule))) {
                 $item->name .= '[]';
             }
-            $parameters[$item->key] = [
-                'in' => $item->in,
-                'name' => $item->key,
-                'description' => empty($item->description) ? $item->name : $item->description,
-                'required' => $item->required,
-            ];
-            if ($item instanceof Body) {
-                $modelName = $method . implode('', array_map('ucfirst', explode('/', $path)));
-                $this->rules2schema($modelName, $item->rules);
-                $parameters[$item->key]['schema']['$ref'] = '#/definitions/' . $modelName;
-            } else {
-                $type = $this->getTypeByRule($item->rule);
-                $parameters[$item->key]['type'] = $type;
-                $parameters[$item->key]['default'] = $item->default;
+            switch (true) {
+                case $item instanceof Body:
+                    $parameter = $this->getDefaultParameter($item->key, $item->in, $item->key, $item->required);
+                    $modelName = $method . implode('', array_map('ucfirst', explode('/', $path)));
+                    $this->rules2schema($modelName, $item->rules);
+                    $parameter['schema']['$ref'] = '#/definitions/' . $modelName;
+                    $parameters[$item->key] = $parameter;
+                    break;
+                case $item instanceof Query:
+                    foreach ($item->rules as $keyNameLabel => $rule) {
+                        $fieldNameLabel = explode('|', $keyNameLabel);
+                        $type = $this->getTypeByRule($rule);
+                        $keyName = $fieldNameLabel[0];
+                        $keyLabel = $fieldNameLabel[1] ?? $fieldNameLabel[0];
+                        $parameter = $this->getDefaultParameter($keyName, $item->in, $keyLabel, str_contains($rule, 'required'));
+                        $parameter['type'] = $type;
+                        $parameter['default'] = $item->default[$keyName] ?? '';
+                        $parameters[$keyName] = $parameter;
+                    }
+                    if (empty($parameters)){
+                        $parameter = $this->getDefaultParameter($item->key, $item->in, $item->key, $item->required);
+                        $parameter['type'] = $this->getTypeByRule($item->rule);
+                        $parameter['default'] = $item->default ?? '';
+                        $parameters[$item->key] = $parameter;
+                    }
+                    break;
+                default:
+                    $parameter = $this->getDefaultParameter($item->key, $item->in, $item->key, $item->required);
+                    $type = $this->getTypeByRule($item->rule);
+                    $parameter['type'] = $type;
+                    $parameter['default'] = $item->default;
+                    $parameters[$item->key] = $parameter;
+                    break;
             }
         }
         return array_values($parameters);
@@ -338,7 +366,7 @@ class SwaggerJson
                         $resp[$item->code]['schema']['items'] = [
                             "type" => 'integer',
                         ];
-                    } elseif (is_string($item->schema[0])) {
+                    } else if (is_string($item->schema[0])) {
                         $resp[$item->code]['schema']['items'] = [
                             "type" => 'string',
                         ];
