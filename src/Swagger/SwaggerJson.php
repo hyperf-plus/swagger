@@ -317,6 +317,10 @@ class SwaggerJson
                     break;
                 case $item instanceof Query:
                     foreach ($item->rules as $keyNameLabel => $rule) {
+                        if (is_numeric($keyNameLabel)) {
+                            $keyNameLabel = $rule;
+                            $rule = '';
+                        }
                         $fieldNameLabel = explode('|', $keyNameLabel);
                         $type = $this->getTypeByRule($rule);
                         $keyName = $fieldNameLabel[0];
