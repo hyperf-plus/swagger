@@ -1,10 +1,11 @@
-# hyperf swagger 
-
-实现来源于 https://github.com/daodao97/apidog 本插件为了兼容hyperf-plus 做处理
+# hyperf swagger
 
 hyperf-plus-swagger 注解自动生成文档，配合hyperf-plus/validate 验证器可自动根据验证规则、场景生成文档所需参数，无需手动编写doc文档
-![Image 注解](./screenshot/2.png)
-![Image 文档](./screenshot/3.png)
+
+![img_1.png](screenshot/img_1.png)
+![img.png](screenshot/img.png)
+
+
 ## 1、安装
 ```
 composer require hyperf-plus/swagger

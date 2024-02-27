@@ -19,6 +19,6 @@ class ApiDefinitions extends AbstractAnnotation
     
     public function __construct($value = null)
     {
-        $this->bindMainProperty('definitions', $value);
+        $this->definitions = $value;
     }
 }

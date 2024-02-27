@@ -18,12 +18,12 @@ use HPlus\Route\Annotation\Body;
 use HPlus\Route\Annotation\FormData;
 use HPlus\Route\Annotation\Param;
 use HPlus\Swagger\ApiAnnotation;
+use Hyperf\Collection\Arr;
+use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\ReflectionManager;
-use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Arr;
-use Hyperf\Utils\Str;
 use HPlus\Validate\Annotations\RequestValidation;
+use Hyperf\Stringable\Str;
 
 class SwaggerJson
 {

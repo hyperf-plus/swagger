@@ -5,6 +5,7 @@ namespace HPlus\Swagger;
 use Hyperf\Di\Annotation\AnnotationCollector;
 use Hyperf\Di\Annotation\AnnotationReader;
 use Hyperf\Di\ReflectionManager;
+use function Hyperf\Config\config;
 
 class ApiAnnotation
 {

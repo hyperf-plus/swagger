@@ -4,14 +4,14 @@ declare(strict_types=1);
 namespace HPlus\Swagger;
 
 use HPlus\Swagger\Swagger\SwaggerJson;
+use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Event\Contract\ListenerInterface;
 use Hyperf\Framework\Event\BeforeServerStart;
 use Hyperf\HttpServer\Router\DispatcherFactory;
 use Hyperf\HttpServer\Router\Handler;
 use Hyperf\Logger\LoggerFactory;
-use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Str;
+use Hyperf\Stringable\Str;
 
 class BootAppConfListener implements ListenerInterface
 {

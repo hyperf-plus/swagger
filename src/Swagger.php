@@ -3,16 +3,10 @@
 declare (strict_types=1);
 namespace HPlus\Swagger;
 
-use GuzzleHttp\Psr7\Stream;
+use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\HttpServer\Contract\ResponseInterface;
-use Hyperf\Utils\ApplicationContext;
-use Psr\Http\Message\StreamInterface;
-/**
- * @\Hyperf\HttpServer\Annotation\AutoController(prefix="/swagger")
- * Class SwaggerController
- */
 #[\Hyperf\HttpServer\Annotation\AutoController(prefix: '/swagger')]
 class Swagger
 {
