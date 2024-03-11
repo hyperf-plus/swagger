@@ -68,10 +68,12 @@ class SwaggerJson
         $params = [];
         $responses = [];
         /** @var GetApi $mapping */
-        $mapping = null;
+        $mappings = [];
         $consumes = null;
         $rules = [];
         $consumes = 'application/x-www-form-urlencoded';
+
+        p($methodAnnotations);
         foreach ($methodAnnotations as $option) {
             if ($option instanceof RequestValidation) {
                 $rules = array_merge($rules, $this->getValidateRule($option));
@@ -100,7 +102,7 @@ class SwaggerJson
             }
 
             if ($option instanceof Mapping) {
-                $mapping = $option;
+                $mappings[] = $option;
             }
             if ($option instanceof Param) {
                 $params[] = $option;
@@ -132,25 +134,26 @@ class SwaggerJson
         }
         $path = str_replace("/_self_path", "", $path);
         $path = $this->getPath($path);
-
-        $method = strtolower($mapping->methods[0] ?? '');
-        $this->swagger['paths'][$path][$method] = [
-            'tags' => [$tag],
-            'summary' => $mapping->summary ?? '',
-            'description' => $mapping->description ?? '',
-            'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . ($mapping->methods[0] ?? ''),
-            'parameters' => $this->makeParameters($params, $path, $method),
-            'produces' => [
-                $consumes
-            ],
-            'responses' => $this->makeResponses($responses, $path, $method),
-        ];
-        if ($consumes !== null) {
-            $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
-        }
-        if ($mapping && property_exists($mapping, 'security') && $mapping->security && isset($this->swagger['securityDefinitions'])) {
-            foreach ($this->swagger['securityDefinitions'] as $key => $val) {
-                $this->swagger['paths'][$path][$method]['security'][] = [$key => $val['petstore_auth'] ?? []];
+        foreach ($mappings as $mapping){
+            $method = strtolower($mapping->methods[0] ?? '');
+            $this->swagger['paths'][$path][$method] = [
+                'tags' => [$tag],
+                'summary' => $mapping->summary ?? '',
+                'description' => $mapping->description ?? '',
+                'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . ($mapping->methods[0] ?? ''),
+                'parameters' => $this->makeParameters($params, $path, $method),
+                'produces' => [
+                    $consumes
+                ],
+                'responses' => $this->makeResponses($responses, $path, $method),
+            ];
+            if ($consumes !== null) {
+                $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
+            }
+            if ($mapping && property_exists($mapping, 'security') && $mapping->security && isset($this->swagger['securityDefinitions'])) {
+                foreach ($this->swagger['securityDefinitions'] as $key => $val) {
+                    $this->swagger['paths'][$path][$method]['security'][] = [$key => $val['petstore_auth'] ?? []];
+                }
             }
         }
     }
