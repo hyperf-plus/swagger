@@ -72,8 +72,6 @@ class SwaggerJson
         $consumes = null;
         $rules = [];
         $consumes = 'application/x-www-form-urlencoded';
-
-        p($methodAnnotations);
         foreach ($methodAnnotations as $option) {
             if ($option instanceof RequestValidation) {
                 $rules = array_merge($rules, $this->getValidateRule($option));
