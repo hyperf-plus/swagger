@@ -1,22 +1,44 @@
 {
   "name": "hyperf-plus/swagger",
-  "description": "A swagger library for Hyperf.",
-  "license": "MIT",
+  "type": "library",
+  "description": "HPlus Swagger 组件 - 自动生成 API 文档，支持 OpenAPI 3.0 规范",
   "keywords": [
     "php",
-    "swoole",
     "hyperf",
-    "swagger"
+    "hyperf-plus",
+    "swagger",
+    "openapi",
+    "api-doc",
+    "documentation"
   ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "毛自豪",
+      "email": "4213509@qq.com"
+    }
+  ],
+  "homepage": "https://github.com/lphkxd/hyperf-plus",
   "support": {
+    "issues": "https://github.com/lphkxd/hyperf-plus/issues",
+    "source": "https://github.com/lphkxd/hyperf-plus/tree/main/swagger"
   },
   "require": {
     "php": ">=8.1",
-    "hyperf-plus/route": "^3.1.0"
+    "hyperf/framework": "^3.1.0",
+    "hyperf/di": "^3.1.0",
+    "hyperf/http-server": "^3.1.0",
+    "hyperf-plus/route": "*"
   },
   "require-dev": {
+    "phpunit/phpunit": "^10.0",
+    "mockery/mockery": "^1.5",
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "phpstan/phpstan": "^1.10"
   },
   "suggest": {
+    "ext-swoole": "Required for Hyperf framework",
+    "hyperf-plus/validate": "For automatic validation documentation"
   },
   "autoload": {
     "psr-4": {
@@ -25,21 +47,24 @@
   },
   "autoload-dev": {
     "psr-4": {
+      "HPlus\\Swagger\\Tests\\": "tests/"
     }
   },
-  "config": {
-    "sort-packages": true
+  "scripts": {
+    "test": "phpunit --colors=always",
+    "test-coverage": "phpunit --coverage-html coverage",
+    "analyse": "phpstan analyse src --level 8",
+    "cs-fix": "php-cs-fixer fix src"
   },
   "extra": {
     "hyperf": {
       "config": "HPlus\\Swagger\\ConfigProvider"
     }
   },
-  "bin": [
-  ],
-  "scripts": {
-    "cs-fix": "php-cs-fixer fix $1",
-    "test": "phpunit --colors=always"
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
   },
-  "minimum-stability": "stable"
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
