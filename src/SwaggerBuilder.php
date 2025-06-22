@@ -296,6 +296,9 @@ class SwaggerBuilder
     {
         $parameters = [];
         
+        // 获取HTTP方法类型
+        $httpMethod = $this->getHttpMethod($method);
+        
         // 路径参数
         foreach ($method->getParameters() as $param) {
             if ($param->getType() && !$param->getType()->isBuiltin()) {
@@ -313,23 +316,28 @@ class SwaggerBuilder
 
         // 查询参数（从验证注解）
         if (class_exists(RequestValidation::class)) {
-            $validation = AnnotationCollector::getMethodAnnotation(
+            $methodAnnotations = AnnotationCollector::getClassMethodAnnotation(
                 $method->getDeclaringClass()->getName(),
-                $method->getName(),
-                RequestValidation::class
+                $method->getName()
             );
+            $validation = $methodAnnotations[RequestValidation::class] ?? null;
 
-            if ($validation && !empty($validation->rules) && $validation->dateType !== 'json') {
-                foreach ($validation->rules as $field => $rule) {
-                    [$fieldName, $description] = $this->parseFieldName($field);
-                    
-                    $parameters[] = [
-                        'name' => $fieldName,
-                        'in' => 'query',
-                        'required' => str_contains($rule, 'required'),
-                        'schema' => $this->ruleToSchema($rule),
-                        'description' => $description ?: "查询参数: {$fieldName}"
-                    ];
+            if ($validation && !empty($validation->rules)) {
+                // 根据HTTP方法和dateType决定参数位置
+                $shouldAddAsQuery = $this->shouldAddValidationAsQueryParams($httpMethod, $validation);
+                
+                if ($shouldAddAsQuery) {
+                    foreach ($validation->rules as $field => $rule) {
+                        [$fieldName, $description] = $this->parseFieldName($field);
+                        
+                        $parameters[] = [
+                            'name' => $fieldName,
+                            'in' => 'query',
+                            'required' => str_contains($rule, 'required'),
+                            'schema' => $this->ruleToSchema($rule),
+                            'description' => $description ?: "查询参数: {$fieldName}"
+                        ];
+                    }
                 }
             }
         }
@@ -342,12 +350,15 @@ class SwaggerBuilder
      */
     private function buildRequestBody(ReflectionMethod $method): ?array
     {
+        // 获取HTTP方法类型
+        $httpMethod = $this->getHttpMethod($method);
+        
         // 检查RequestBody注解
-        $requestBodyAnnotation = AnnotationCollector::getMethodAnnotation(
+        $methodAnnotations = AnnotationCollector::getClassMethodAnnotation(
             $method->getDeclaringClass()->getName(),
-            $method->getName(),
-            RequestBody::class
+            $method->getName()
         );
+        $requestBodyAnnotation = $methodAnnotations[RequestBody::class] ?? null;
 
         if ($requestBodyAnnotation) {
             return [
@@ -361,22 +372,27 @@ class SwaggerBuilder
 
         // 从验证注解构建
         if (class_exists(RequestValidation::class) && class_exists(RuleParser::class)) {
-            $validation = AnnotationCollector::getMethodAnnotation(
+            $methodAnnotations = AnnotationCollector::getClassMethodAnnotation(
                 $method->getDeclaringClass()->getName(),
-                $method->getName(),
-                RequestValidation::class
+                $method->getName()
             );
+            $validation = $methodAnnotations[RequestValidation::class] ?? null;
 
-            if ($validation && !empty($validation->rules) && $validation->dateType === 'json') {
-                $schema = RuleParser::rulesToJsonSchema($validation->rules);
+            if ($validation && !empty($validation->rules)) {
+                // 只有非GET方法且dateType为json时才添加请求体
+                $shouldAddAsRequestBody = $this->shouldAddValidationAsRequestBody($httpMethod, $validation);
                 
-                return [
-                    'description' => '请求数据',
-                    'required' => true,
-                    'content' => [
-                        'application/json' => ['schema' => $schema]
-                    ]
-                ];
+                if ($shouldAddAsRequestBody) {
+                    $schema = RuleParser::rulesToJsonSchema($validation->rules);
+                    
+                    return [
+                        'description' => '请求数据',
+                        'required' => true,
+                        'content' => [
+                            'application/json' => ['schema' => $schema]
+                        ]
+                    ];
+                }
             }
         }
 
@@ -390,12 +406,12 @@ class SwaggerBuilder
     {
         $responses = [];
         
-        $methodAnnotations = AnnotationCollector::getMethodAnnotations(
+        $methodAnnotations = AnnotationCollector::getClassMethodAnnotation(
             $method->getDeclaringClass()->getName(),
             $method->getName()
         );
 
-        foreach ($methodAnnotations as $annotation) {
+        foreach ($methodAnnotations as $annotationClass => $annotation) {
             if ($annotation instanceof ApiResponse) {
                 $responses[(string)$annotation->code] = [
                     'description' => $annotation->description ?? 'Success',
@@ -460,12 +476,12 @@ class SwaggerBuilder
     {
         $callbacks = [];
         
-        $methodAnnotations = AnnotationCollector::getMethodAnnotations(
+        $methodAnnotations = AnnotationCollector::getClassMethodAnnotation(
             $method->getDeclaringClass()->getName(),
             $method->getName()
         );
 
-        foreach ($methodAnnotations as $annotation) {
+        foreach ($methodAnnotations as $annotationClass => $annotation) {
             if ($annotation instanceof ApiCallback) {
                 $callbacks[$annotation->name] = [
                     $annotation->expression => $annotation->pathItem
@@ -548,11 +564,11 @@ class SwaggerBuilder
         ];
 
         foreach ($routeAnnotations as $annotationClass) {
-            $annotation = AnnotationCollector::getMethodAnnotation(
+            $methodAnnotations = AnnotationCollector::getClassMethodAnnotation(
                 $method->getDeclaringClass()->getName(),
-                $method->getName(),
-                $annotationClass
+                $method->getName()
             );
+            $annotation = $methodAnnotations[$annotationClass] ?? null;
             
             if ($annotation) {
                 return $annotation;
@@ -711,5 +727,59 @@ class SwaggerBuilder
             'object' => ['type' => 'object'],
             default => ['type' => 'string']
         };
+    }
+
+    /**
+     * 获取HTTP方法类型
+     */
+    private function getHttpMethod(ReflectionMethod $method): string
+    {
+        $routeAnnotation = $this->getRouteAnnotation($method);
+        
+        if ($routeAnnotation instanceof GetApi) {
+            return 'GET';
+        } elseif ($routeAnnotation instanceof PostApi) {
+            return 'POST';
+        } elseif ($routeAnnotation instanceof PutApi) {
+            return 'PUT';
+        } elseif ($routeAnnotation instanceof DeleteApi) {
+            return 'DELETE';
+        } elseif ($routeAnnotation instanceof PatchApi) {
+            return 'PATCH';
+        }
+        
+        return 'GET'; // 默认为GET
+    }
+
+    /**
+     * 判断验证规则是否应该添加为查询参数
+     */
+    private function shouldAddValidationAsQueryParams(string $httpMethod, RequestValidation $validation): bool
+    {
+        // GET 和 DELETE 方法的参数总是作为查询参数
+        if (in_array($httpMethod, ['GET', 'DELETE'])) {
+            return true;
+        }
+        
+        // 其他方法如果明确指定了非json类型，也作为查询参数
+        if ($validation->dateType !== 'json') {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * 判断验证规则是否应该添加为请求体
+     */
+    private function shouldAddValidationAsRequestBody(string $httpMethod, RequestValidation $validation): bool
+    {
+        // GET 和 DELETE 方法不应该有请求体
+        if (in_array($httpMethod, ['GET', 'DELETE'])) {
+            return false;
+        }
+        
+        // 只有明确指定为json类型才作为请求体
+        return $validation->dateType === 'json';
     }
 } 

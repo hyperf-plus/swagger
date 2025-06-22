@@ -30,8 +30,8 @@ return [
     // 服务条款
     'termsOfService' => 'https://example.com/terms',
 
-    // JSON Schema 方言 (OpenAPI 3.1+)
-    'jsonSchemaDialect' => 'https://json-schema.org/draft/2020-12/schema',
+    // JSON Schema 方言 (OpenAPI 3.1+) - 使用默认值以避免警告
+    // 'jsonSchemaDialect' => 'https://spec.openapis.org/oas/3.1/dialect/base',
 
     // 服务器配置
     'servers' => [
