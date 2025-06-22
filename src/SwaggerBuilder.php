@@ -112,38 +112,34 @@ class SwaggerBuilder
      */
     private function buildPaths(): array
     {
-        $paths = [];
-        
-        // 首先尝试使用RouteCollector（如果route包可用）
+        // 完全依赖 RouteCollector - 统一的路由数据源
         if (class_exists(\HPlus\Route\RouteCollector::class)) {
-            $routeCollector = \HPlus\Route\RouteCollector::getInstance();
-            $routes = $routeCollector->collectRoutes();
-            
-            foreach ($routes as $route) {
-                foreach ($route['methods'] as $httpMethod) {
-                    $operation = $this->buildOperationFromRoute($route);
-                    
-                    if (!isset($paths[$route['path']])) {
-                        $paths[$route['path']] = [];
-                    }
-                    
-                    $paths[$route['path']][strtolower($httpMethod)] = $operation;
-                }
-            }
-            
-            return $paths;
-        }
-        
-        // 兜底方案：直接从注解收集（原有逻辑）
-        $controllers = AnnotationCollector::getClassesByAnnotation(ApiController::class);
-        
-        foreach ($controllers as $className => $controllerAnnotation) {
-            $reflectionClass = new ReflectionClass($className);
-            $controllerPaths = $this->buildControllerPaths($reflectionClass, $controllerAnnotation);
-            $paths = array_merge($paths, $controllerPaths);
-        }
+            try {
+                $routeCollector = \HPlus\Route\RouteCollector::getInstance();
+                $routes = $routeCollector->collectRoutes();
+                
+                $paths = [];
+                foreach ($routes as $route) {
+                    foreach ($route['methods'] as $httpMethod) {
+                        $operation = $this->buildOperationFromRoute($route);
 
-        return $paths;
+                        if (!isset($paths[$route['path']])) {
+                            $paths[$route['path']] = [];
+                        }
+
+                        $paths[$route['path']][strtolower($httpMethod)] = $operation;
+                    }
+                }
+                
+                return $paths;
+                
+            } catch (\Throwable $e) {
+                error_log("RouteCollector failed in SwaggerBuilder: " . $e->getMessage());
+            }
+        }
+        
+        // 如果 RouteCollector 不可用，返回空数组
+        return [];
     }
 
     /**
@@ -215,7 +211,22 @@ class SwaggerBuilder
             $routeAnnotation = $this->getRouteAnnotation($method);
             
             if ($routeAnnotation) {
-                $fullPath = $this->normalizePath($controllerPrefix . ($routeAnnotation->path ?? ''));
+                $path = $routeAnnotation->path ?? '';
+                
+                // 确保路径参数之前有斜杠
+                if ($path !== '' && !str_starts_with($path, '/')) {
+                    $path = '/' . $path;
+                }
+                
+                // 处理控制器前缀和路径的拼接
+                if ($controllerPrefix && $path) {
+                    // 确保前缀以 / 结尾，路径以 / 开头
+                    $controllerPrefix = rtrim($controllerPrefix, '/');
+                    $fullPath = $controllerPrefix . $path;
+                } else {
+                    $fullPath = $controllerPrefix . $path;
+                }
+                $fullPath = $this->normalizePath($fullPath);
                 
                 foreach ($routeAnnotation->methods as $httpMethod) {
                     $operation = $this->buildOperation($method, $routeAnnotation, $controllerAnnotation);

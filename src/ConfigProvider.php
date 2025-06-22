@@ -35,9 +35,6 @@ class ConfigProvider
                     'destination' => BASE_PATH . '/config/autoload/swagger.php',
                 ],
             ],
-            'listeners' => [
-                BootAppConfListener::class,
-            ],
         ];
     }
 }

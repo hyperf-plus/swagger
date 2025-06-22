@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use function Hyperf\Support\env;
 
 return [
     // 启用 Swagger
@@ -184,7 +185,7 @@ return [
     // Swagger UI 配置
     'ui' => [
         'title' => 'Hyperf Plus API Documentation',
-        'cdn_url' => 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.2',
+        'cdn_url' => 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.25.2',
         'custom_css' => '',
         'custom_js' => '',
         

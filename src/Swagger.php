@@ -43,7 +43,7 @@ class Swagger
   <head>
     <meta charset="UTF-8">
     <title>{$title}</title>
-    <link rel="stylesheet" type="text/css" href="{$cdnUrl}/swagger-ui-bundle.css" />
+    <link rel="stylesheet" type="text/css" href="{$cdnUrl}/swagger-ui.css" />
     <link rel="icon" type="image/png" href="{$cdnUrl}/favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="{$cdnUrl}/favicon-16x16.png" sizes="16x16" />
     <style>
