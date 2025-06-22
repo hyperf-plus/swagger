@@ -17,12 +17,8 @@ class ConfigProvider
     public function __invoke(): array
     {
         return [
-            'commands' => [
-            ],
             'dependencies' => [
-            ],
-            'listeners' => [
-                BootAppConfListener::class,
+                SwaggerBuilder::class => SwaggerBuilder::class,
             ],
             'annotations' => [
                 'scan' => [
@@ -33,11 +29,14 @@ class ConfigProvider
             ],
             'publish' => [
                 [
-                    'id' => 'swagger',
-                    'description' => 'hyperf-swagger',
+                    'id' => 'swagger-config',
+                    'description' => 'Swagger configuration file',
                     'source' => __DIR__ . '/../publish/swagger.php',
                     'destination' => BASE_PATH . '/config/autoload/swagger.php',
-                ]
+                ],
+            ],
+            'listeners' => [
+                BootAppConfListener::class,
             ],
         ];
     }
