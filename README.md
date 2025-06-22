@@ -37,7 +37,7 @@ composer require hyperf-plus/swagger
 ### 1. 发布配置
 
 ```bash
-php bin/hyperf.php vendor:publish hplus/swagger
+php bin/hyperf.php vendor:publish hyperf-plus/swagger
 ```
 
 ### 2. 基础配置
