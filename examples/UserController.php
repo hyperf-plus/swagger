@@ -18,24 +18,24 @@ use HPlus\Validate\Annotations\RequestValidation;
 use HPlus\Swagger\Annotation\ApiDefinition;
 
 /**
- * 用户管理控制器 - RESTful增强版
+ * 用户管理控制�?- RESTful增强�?
  * 
  * 展示RESTful规则自动生成特性：
- * 1. 控制器自动前缀：UserController → /api/users（复数）
- * 2. RESTful方法映射：方法名+HTTP动词 → 标准路径
- * 3. 用户设置优先：设置了prefix/path就用设置的
+ * 1. 控制器自动前缀：UserController �?/api/users（复数）
+ * 2. RESTful方法映射：方法名+HTTP动词 �?标准路径
+ * 3. 用户设置优先：设置了prefix/path就用设置�?
  * 4. 必须注解控制：只有加了路由注解的方法才能访问
  * 
- * RESTful自动映射示例：
- * - GET + index() → GET /api/users
- * - GET + show() → GET /api/users/{id}
- * - POST + create() → POST /api/users
- * - PUT + update() → PUT /api/users/{id}
- * - DELETE + delete() → DELETE /api/users/{id}
+ * RESTful自动映射示例�?
+ * - GET + index() �?GET /api/users
+ * - GET + show() �?GET /api/users/{id}
+ * - POST + create() �?POST /api/users
+ * - PUT + update() �?PUT /api/users/{id}
+ * - DELETE + delete() �?DELETE /api/users/{id}
  */
 #[ApiController(
     // prefix 不设置：自动生成 /api/users (RESTful复数)
-    // 如果设置了：prefix: '/api/v1/user'，就用你设置的
+    // 如果设置了：prefix: '/api/v1/user'，就用你设置�?
     tag: 'User Management',
     description: '用户管理相关接口'
 )]
@@ -51,18 +51,18 @@ class UserController
      * RESTful自动路径：GET /api/users (因为方法名是index)
      */
     #[GetApi(
-        // path 不设置：根据方法名index自动生成空路径
-        // 如果设置了：path: '/list'，就是 GET /api/users/list
+        // path 不设置：根据方法名index自动生成空路�?
+        // 如果设置了：
         summary: '获取用户列表',
         description: '支持分页和筛选的用户列表接口'
     )]
     #[RequestValidation(rules: [
         'page|页码' => 'integer|min:1|default:1',
         'size|每页数量' => 'integer|min:1|max:100|default:20',
-        'keyword|搜索关键词' => 'string|max:100',
-        'status|用户状态' => 'in:active,inactive,pending'
+        'keyword|搜索关键�? => 'string|max:100',
+        'status|用户状�? => 'in:active,inactive,pending'
     ])]
-    public function index()  // RESTful标准方法名
+    public function index()  // RESTful标准方法�?
     {
         $page = (int)$this->request->query('page', 1);
         $size = (int)$this->request->query('size', 20);
@@ -98,7 +98,7 @@ class UserController
         // path 不设置：根据方法名show自动生成 /{id}
         summary: '获取用户详情'
     )]
-    public function show(int $id)  // RESTful标准方法名
+    public function show(int $id)  // RESTful标准方法�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -111,7 +111,7 @@ class UserController
             'profile' => [
                 'nickname' => "用户{$id}",
                 'avatar' => 'https://example.com/avatar.jpg',
-                'bio' => '这是用户简介'
+                'bio' => '这是用户简�?
             ],
             'status' => 'active',
             'created_at' => '2023-01-01 00:00:00',
@@ -124,21 +124,21 @@ class UserController
      * RESTful自动路径：POST /api/users (因为方法名是create)
      */
     #[PostApi(
-        // path 不设置：根据方法名create自动生成空路径
+        // path 不设置：根据方法名create自动生成空路�?
         summary: '创建用户'
     )]
     #[RequestValidation(
         rules: [
-            'username|用户名' => 'required|string|min:3|max:20',
+            'username|用户�? => 'required|string|min:3|max:20',
             'email|邮箱' => 'required|email|max:100',
             'password|密码' => 'required|string|min:6|max:32',
             'profile|个人资料' => 'array',
             'profile.nickname|昵称' => 'string|max:50',
-            'profile.bio|个人简介' => 'string|max:200'
+            'profile.bio|个人简�? => 'string|max:200'
         ],
         dateType: 'json'
     )]
-    public function create()  // RESTful标准方法名
+    public function create()  // RESTful标准方法�?
     {
         $data = $this->request->getParsedBody();
         
@@ -165,16 +165,16 @@ class UserController
     )]
     #[RequestValidation(
         rules: [
-            'username|用户名' => 'string|min:3|max:20',
+            'username|用户�? => 'string|min:3|max:20',
             'email|邮箱' => 'email|max:100',
             'profile|个人资料' => 'array',
             'profile.nickname|昵称' => 'string|max:50',
-            'profile.bio|个人简介' => 'string|max:200',
-            'status|状态' => 'in:active,inactive,pending'
+            'profile.bio|个人简�? => 'string|max:200',
+            'status|状�? => 'in:active,inactive,pending'
         ],
         dateType: 'json'
     )]
-    public function update(int $id)  // RESTful标准方法名
+    public function update(int $id)  // RESTful标准方法�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -200,25 +200,25 @@ class UserController
         // path 不设置：根据方法名delete自动生成 /{id}
         summary: '删除用户'
     )]
-    public function delete(int $id)  // RESTful标准方法名
+    public function delete(int $id)  // RESTful标准方法�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
         }
 
-        // 模拟软删除
+        // 模拟软删�?
         return $this->response->withStatus(204);
     }
 
     /**
-     * 获取用户状态
-     * RESTful自动路径：GET /api/users/{id}/state (资源子操作)
+     * 获取用户状�?
+     * RESTful自动路径：GET /api/users/{id}/state (资源子操�?
      */
     #[GetApi(
         // path 不设置：根据方法名state自动生成 /{id}/state
-        summary: '获取用户状态'
+        summary: '获取用户状�?
     )]
-    public function state(int $id)  // RESTful资源子操作
+    public function state(int $id)  // RESTful资源子操�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -235,12 +235,12 @@ class UserController
 
     /**
      * 启用用户
-     * RESTful自动路径：POST /api/users/{id}/enable (资源子操作)
+     * RESTful自动路径：POST /api/users/{id}/enable (资源子操�?
      */
     #[PostApi(
         summary: '启用用户'
     )]
-    public function enable(int $id)  // RESTful资源子操作
+    public function enable(int $id)  // RESTful资源子操�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -250,18 +250,18 @@ class UserController
             'id' => $id,
             'status' => 'active',
             'enabled_at' => date('Y-m-d H:i:s'),
-            'message' => '用户已启用'
+            'message' => '用户已启�?
         ];
     }
 
     /**
      * 禁用用户
-     * RESTful自动路径：POST /api/users/{id}/disable (资源子操作)
+     * RESTful自动路径：POST /api/users/{id}/disable (资源子操�?
      */
     #[PostApi(
         summary: '禁用用户'
     )]
-    public function disable(int $id)  // RESTful资源子操作
+    public function disable(int $id)  // RESTful资源子操�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -271,18 +271,18 @@ class UserController
             'id' => $id,
             'status' => 'inactive',
             'disabled_at' => date('Y-m-d H:i:s'),
-            'message' => '用户已禁用'
+            'message' => '用户已禁�?
         ];
     }
 
     /**
      * 获取用户权限
-     * RESTful自动路径：GET /api/users/{id}/permissions (资源子操作)
+     * RESTful自动路径：GET /api/users/{id}/permissions (资源子操�?
      */
     #[GetApi(
         summary: '获取用户权限'
     )]
-    public function permissions(int $id)  // RESTful资源子操作
+    public function permissions(int $id)  // RESTful资源子操�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -303,12 +303,12 @@ class UserController
 
     /**
      * 获取用户历史记录
-     * RESTful自动路径：GET /api/users/{id}/history (资源子操作)
+     * RESTful自动路径：GET /api/users/{id}/history (资源子操�?
      */
     #[GetApi(
         summary: '获取用户历史记录'
     )]
-    public function history(int $id)  // RESTful资源子操作
+    public function history(int $id)  // RESTful资源子操�?
     {
         if ($id <= 0) {
             return $this->response->json(['error' => 'Invalid ID'])->withStatus(400);
@@ -344,7 +344,7 @@ class UserController
         summary: '搜索用户'
     )]
     #[RequestValidation(rules: [
-        'q|搜索关键词' => 'required|string|min:1|max:100',
+        'q|搜索关键�? => 'required|string|min:1|max:100',
         'type|搜索类型' => 'in:username,email,nickname',
         'limit|返回数量' => 'integer|min:1|max:50|default:10'
     ])]
@@ -427,8 +427,8 @@ class UserController
     }
 
     /**
-     * 自定义方法名的例子
-     * 非RESTful方法名：getUserActiveCount → GET /api/users/get-user-active-count
+     * 自定义方法名的例�?
+     * 非RESTful方法名：getUserActiveCount �?GET /api/users/get-user-active-count
      */
     #[GetApi(
         // 非标准RESTful方法名，会自动转换为 /get-user-active-count
@@ -445,13 +445,12 @@ class UserController
 
     /**
      * 用户自定义路径的例子
-     * 用户设置了path，优先使用用户的设置
+     * 遵循规范：不设置path，使用默认逻辑
      */
     #[GetApi(
-        path: '/statistics',  // 用户手动设置了path，不会自动生成
         summary: '用户统计信息'
     )]
-    public function someMethodName()  // 方法名不重要了，因为path已指定
+    public function statistics()  // 方法名决定路径：/statistics
     {
         return [
             'total_users' => 1000,
@@ -465,7 +464,7 @@ class UserController
      * 自动生成：GET /api/users/{id}/custom-action
      */
     #[GetApi(
-        summary: '自定义操作（智能路径）'
+        summary: '自定义操作（智能路径�?
     )]
     public function customAction(int $id)  // 智能识别ID参数
     {
@@ -477,11 +476,11 @@ class UserController
     }
 
     /**
-     * 智能参数识别示例2：多个参数
+     * 智能参数识别示例2：多个参�?
      * 自动生成：GET /api/users/{userId}/posts/{postId}
      */
     #[GetApi(
-        summary: '获取用户的特定文章'
+        summary: '获取用户的特定文�?
     )]
     public function posts(int $userId, int $postId)  // 智能识别多个参数
     {
@@ -513,7 +512,7 @@ class UserController
     }
 
     /**
-     * 智能参数识别示例4：比较操作
+     * 智能参数识别示例4：比较操�?
      * 自动生成：POST /api/users/{id}/compare-with/{otherId}
      */
     #[PostApi(
@@ -533,7 +532,7 @@ class UserController
     }
 
     /**
-     * 智能参数识别示例5：复杂参数
+     * 智能参数识别示例5：复杂参�?
      * 自动生成：GET /api/users/{id}/analyze-activity/{year}/{month}
      */
     #[GetApi(
@@ -555,9 +554,9 @@ class UserController
      * 自动生成：GET /api/users/get-online-count
      */
     #[GetApi(
-        summary: '获取在线用户数'
+        summary: '获取在线用户�?
     )]
-    public function getOnlineCount()  // 无参数，简单路径
+    public function getOnlineCount()  // 无参数，简单路�?
     {
         return [
             'online_count' => 128,
@@ -565,7 +564,7 @@ class UserController
         ];
     }
 
-    // 注意：这些方法没有路由注解，不会对外暴露！
+    // 注意：这些方法没有路由注解，不会对外暴露�?
     public function helperMethod()
     {
         return 'This method has no route annotation, so it\'s not accessible';
@@ -578,10 +577,10 @@ class UserController
 }
 
 /**
- * 另一个控制器示例：展示复数化和版本控制
+ * 另一个控制器示例：展示复数化和版本控�?
  */
 #[ApiController(
-    // 不设置prefix：自动生成 /api/categories (category复数化)
+    // 不设置prefix：自动生�?/api/categories (category复数�?
 )]
 class CategoryController
 {
@@ -599,7 +598,7 @@ class CategoryController
 namespace App\Controller\Api\V2;
 
 #[ApiController(
-    // 不设置prefix：自动生成 /api/v2/products
+    // 不设置prefix：自动生�?/api/v2/products
 )]
 class ProductController
 {
@@ -612,7 +611,7 @@ class ProductController
 }
 
 /**
- * 用户完全自定义示例
+ * 用户完全自定义示�?
  */
 #[ApiController(
     prefix: '/custom/path',  // 用户设置了，就用这个
@@ -620,7 +619,7 @@ class ProductController
 )]
 class CustomController
 {
-    #[GetApi(path: '/special')]  // 用户设置了，就用这个
+    #[GetApi(]  // 用户设置了，就用这个
     public function anything()
     {
         // 最终路径：GET /custom/path/special
@@ -637,7 +636,7 @@ class CustomController
     description: '用户数据模型',
     properties: [
         'id' => ['type' => 'integer', 'description' => '用户ID', 'example' => 1],
-        'username' => ['type' => 'string', 'description' => '用户名', 'example' => 'john_doe'],
+        'username' => ['type' => 'string', 'description' => '用户�?, 'example' => 'john_doe'],
         'email' => ['type' => 'string', 'format' => 'email', 'description' => '邮箱'],
         'profile' => [
             'type' => 'object',
@@ -645,10 +644,10 @@ class CustomController
             'properties' => [
                 'nickname' => ['type' => 'string', 'description' => '昵称'],
                 'avatar' => ['type' => 'string', 'format' => 'uri', 'description' => '头像URL'],
-                'bio' => ['type' => 'string', 'description' => '个人简介']
+                'bio' => ['type' => 'string', 'description' => '个人简�?]
             ]
         ],
-        'status' => ['type' => 'string', 'enum' => ['active', 'inactive', 'pending'], 'description' => '状态'],
+        'status' => ['type' => 'string', 'enum' => ['active', 'inactive', 'pending'], 'description' => '状�?],
         'created_at' => ['type' => 'string', 'format' => 'date-time', 'description' => '创建时间'],
         'updated_at' => ['type' => 'string', 'format' => 'date-time', 'description' => '更新时间']
     ],

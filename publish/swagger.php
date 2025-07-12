@@ -6,6 +6,39 @@ use function Hyperf\Support\env;
 return [
     // 启用 Swagger
     'enable' => env('SWAGGER_ENABLE', true),
+    
+    // 输出文件路径 (可选，设置后会在服务启动时生成JSON文件)
+    // 多服务器环境下，可以使用 {server} 变量来区分不同服务器的文档
+    // 例如：BASE_PATH . '/runtime/swagger/api-docs-{server}.json'
+    'output_file' => BASE_PATH . '/runtime/swagger/api-docs-{server}.json',
+    
+    // 忽略回调 (可选，用于过滤不需要文档化的控制器和方法)
+    // 返回 true 表示忽略该控制器/方法，返回 false 表示包含在文档中
+    'ignore' => function ($controller, $action) {
+        // 示例：忽略所有以 __ 开头的方法（魔术方法）
+        if (str_starts_with($action, '__')) {
+            return true;
+        }
+        
+        // 示例：忽略特定控制器
+        $ignoreControllers = [
+            'App\\Controller\\AbstractController',
+            'App\\Controller\\TestController',
+            'App\\Controller\\HealthController',
+        ];
+        
+        if (in_array($controller, $ignoreControllers)) {
+            return true;
+        }
+        
+        // 示例：忽略特定方法
+        $ignoreMethods = ['test', 'debug', 'internal'];
+        if (in_array($action, $ignoreMethods)) {
+            return true;
+        }
+        
+        return false;
+    },
 
     // OpenAPI 3.1.1 基本信息
     'title' => env('APP_NAME', 'API Documentation'),

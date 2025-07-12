@@ -27,6 +27,9 @@ class ConfigProvider
                     ],
                 ],
             ],
+            'listeners' => [
+                SwaggerBootListener::class,
+            ],
             'publish' => [
                 [
                     'id' => 'swagger-config',
