@@ -123,11 +123,14 @@ class SwaggerBuilder
                     foreach ($route['methods'] as $httpMethod) {
                         $operation = $this->buildOperationFromRoute($route);
 
-                        if (!isset($paths[$route['path']])) {
-                            $paths[$route['path']] = [];
+                        // 清理路径中的正则表达式约束用于 Swagger 文档
+                        $cleanPath = $this->cleanPathRegex($route['path']);
+
+                        if (!isset($paths[$cleanPath])) {
+                            $paths[$cleanPath] = [];
                         }
 
-                        $paths[$route['path']][strtolower($httpMethod)] = $operation;
+                        $paths[$cleanPath][strtolower($httpMethod)] = $operation;
                     }
                 }
                 
@@ -231,11 +234,14 @@ class SwaggerBuilder
                 foreach ($routeAnnotation->methods as $httpMethod) {
                     $operation = $this->buildOperation($method, $routeAnnotation, $controllerAnnotation);
                     
-                    if (!isset($paths[$fullPath])) {
-                        $paths[$fullPath] = [];
+                    // 清理路径中的正则表达式约束用于 Swagger 文档
+                    $cleanPath = $this->cleanPathRegex($fullPath);
+                    
+                    if (!isset($paths[$cleanPath])) {
+                        $paths[$cleanPath] = [];
                     }
                     
-                    $paths[$fullPath][strtolower($httpMethod)] = $operation;
+                    $paths[$cleanPath][strtolower($httpMethod)] = $operation;
                 }
             }
         }
@@ -323,7 +329,7 @@ class SwaggerBuilder
             $validation = $methodAnnotations[RequestValidation::class] ?? null;
 
             if ($validation && !empty($validation->rules)) {
-                // 根据HTTP方法和dateType决定参数位置
+                // 根据HTTP方法和dataType决定参数位置
                 $shouldAddAsQuery = $this->shouldAddValidationAsQueryParams($httpMethod, $validation);
                 
                 if ($shouldAddAsQuery) {
@@ -379,7 +385,7 @@ class SwaggerBuilder
             $validation = $methodAnnotations[RequestValidation::class] ?? null;
 
             if ($validation && !empty($validation->rules)) {
-                // 只有非GET方法且dateType为json时才添加请求体
+                // 只有非GET方法且dataType为json时才添加请求体
                 $shouldAddAsRequestBody = $this->shouldAddValidationAsRequestBody($httpMethod, $validation);
                 
                 if ($shouldAddAsRequestBody) {
@@ -648,6 +654,17 @@ class SwaggerBuilder
     }
 
     /**
+     * 清理路径中的正则表达式约束
+     * {id:\d+} → {id}
+     * {name:[a-z]+} → {name}
+     */
+    private function cleanPathRegex(string $path): string
+    {
+        // 移除路径参数中的正则表达式约束
+        return preg_replace('/\{([^}:]+):[^}]+\}/', '{$1}', $path);
+    }
+
+    /**
      * 获取默认服务器配置
      */
     private function getDefaultServers(): array
@@ -762,7 +779,7 @@ class SwaggerBuilder
         }
         
         // 其他方法如果明确指定了非json类型，也作为查询参数
-        if ($validation->dateType !== 'json') {
+        if ($validation->dataType !== 'json') {
             return true;
         }
         
@@ -780,6 +797,6 @@ class SwaggerBuilder
         }
         
         // 只有明确指定为json类型才作为请求体
-        return $validation->dateType === 'json';
+        return $validation->dataType === 'json';
     }
 } 
