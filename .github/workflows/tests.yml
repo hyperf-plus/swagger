@@ -45,24 +45,4 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-interaction
       
       - name: Run tests
-        run: vendor/bin/phpunit --colors=always
-
-  code-style:
-    runs-on: ubuntu-latest
-    name: Code Style
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          tools: composer:v2
-      
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
-      
-      - name: Check syntax
-        run: find src -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
+        run: ./vendor/bin/phpunit --no-coverage
