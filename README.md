@@ -14,6 +14,8 @@
 - 📝 **验证规则转换** - 自动将验证规则转为 JSON Schema
 - ⚡ **软依赖设计** - validate 插件可选，无则跳过参数解析
 - 🎨 **美观 UI** - 集成 Swagger UI，支持在线测试
+- 💾 **懒加载+缓存** - 启动零开销，首次访问构建并缓存
+- 📋 **FormRequest 支持** - 自动识别 Hyperf FormRequest 验证器
 
 ## 📦 安装
 
@@ -249,6 +251,38 @@ php bin/hyperf.php swagger:validate
 
 # 导出文档
 php bin/hyperf.php swagger:export --format=yaml
+```
+
+## ⚡ 性能优化
+
+### 懒加载 + 缓存机制
+
+Swagger 文档**不在启动时生成**，而是在首次访问 `/swagger/json` 时才构建，并缓存结果：
+
+```
+启动服务
+  └─→ 零开销（不构建文档）
+
+访问 /swagger/json（第1次）
+  └─→ SwaggerBuilder::build() 构建文档
+  └─→ 缓存结果
+
+访问 /swagger/json（第N次）
+  └─→ 直接返回缓存（极快）
+```
+
+### 手动刷新缓存
+
+如果代码有更新，需要重新生成文档：
+
+```php
+// 注入 SwaggerBuilder
+#[Inject]
+private SwaggerBuilder $swaggerBuilder;
+
+// 清除缓存后重新构建
+$this->swaggerBuilder->clearCache();
+$newDoc = $this->swaggerBuilder->build();
 ```
 
 ## 🤝 组件协作
